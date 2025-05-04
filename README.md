@@ -1,2 +1,2 @@
-# Your-Diet-Friend-for-CKD
+# Your-Diet-Friend-for-Kidney disease
 Diet friend for ckd
