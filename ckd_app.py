@@ -10,9 +10,7 @@ food_data = [
     {"Food": "Broccoli (1/2 cup steamed)", "Calories": 27, "Sodium_mg": 25, "Potassium_mg": 229, "Phosphorus_mg": 32},
     {"Food": "Milk (1 cup)", "Calories": 103, "Sodium_mg": 107, "Potassium_mg": 366, "Phosphorus_mg": 247},
     {"Food": "Oatmeal (1/2 cup cooked)", "Calories": 83, "Sodium_mg": 2, "Potassium_mg": 61, "Phosphorus_mg": 77}
-    {"Food": "Apple (1 medium)", "Calories": 95, "Sodium_mg": 2, "Potassium_mg": 195, "Phosphorus_mg": 20},
-
-
+]
 
 food_df = pd.DataFrame(food_data)
 
