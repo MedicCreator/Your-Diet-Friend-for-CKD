@@ -3,7 +3,8 @@ import streamlit as st
 
 food_data = [
     {"Food": "Boiled Egg", "Calories": 68, "Sodium_mg": 71, "Potassium_mg": 63, "Phosphorus_mg": 95},
-    {"Food": "White Bread (1 slice)", "Calories": 66, "Sodium_mg": 134, "Potassium_mg": 37, "Phosphorus_mg": 25},
+    {"Food": "Apple (1 medium)", "Calories": 95, "Sodium_mg": 2, "Potassium_mg": 195, "Phosphorus_mg": 20},
+{"Food": "White Bread (1 slice)", "Calories": 66, "Sodium_mg": 134, "Potassium_mg": 37, "Phosphorus_mg": 25},
     {"Food": "Banana (1 medium)", "Calories": 105, "Sodium_mg": 1, "Potassium_mg": 422, "Phosphorus_mg": 22},
     {"Food": "Grilled Chicken (3 oz)", "Calories": 128, "Sodium_mg": 60, "Potassium_mg": 220, "Phosphorus_mg": 196},
     {"Food": "Brown Rice (1 cup)", "Calories": 216, "Sodium_mg": 10, "Potassium_mg": 84, "Phosphorus_mg": 162},
