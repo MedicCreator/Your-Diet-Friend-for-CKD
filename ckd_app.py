@@ -44,7 +44,7 @@ def analyze_food_intake(food_items):
 
     return pd.DataFrame(results)
 
-st.title("CKD Stage 3 Food Analyzer")
+st.title("Diet Analyzer for Kidney Disease")
 
 user_input = st.text_area("Enter food items (comma-separated):", "Banana, Grilled Chicken, Milk")
 
