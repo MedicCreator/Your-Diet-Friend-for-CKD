@@ -1,5 +1,6 @@
 import pandas as pd
 import streamlit as st
+API_KEY = TJqahhgjAdycylf6evHeiobkUivJb3NdatsHuFDU
 
 food_data = [
     {"Food": "Boiled Egg", "Calories": 68, "Sodium_mg": 71, "Potassium_mg": 63, "Phosphorus_mg": 95},
