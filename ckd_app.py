@@ -6,7 +6,7 @@ import os
 
 # Load your API key securely
 load_dotenv()
-API_KEY = os.getenv("USDA_API_KEY")
+API_KEY = os.getenv("GnAvq8vSG5VYzrO2cNbzK9Scs4S49cGAVziwHZRb")
 
 # Search food names from USDA
 def search_foods(query, max_results=5):
