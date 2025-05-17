@@ -4,6 +4,7 @@ import pandas as pd
 
 # Load API key from Streamlit Cloud Secrets
 API_KEY = st.secrets["USDA_API_KEY"]
+st.write("API Key loaded:", API_KEY[:4] + "****")
 
 # Function to search foods from USDA
 def search_foods(query, max_results=5):
