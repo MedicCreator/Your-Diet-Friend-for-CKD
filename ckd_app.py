@@ -1,12 +1,9 @@
 import streamlit as st
 import requests
 import pandas as pd
-from dotenv import load_dotenv
-import os
 
-# Load your API key securely
-load_dotenv()
-API_KEY = os.getenv("GnAvq8vSG5VYzrO2cNbzK9Scs4S49cGAVziwHZRb")
+# Load API key from Streamlit Secrets
+API_KEY = st.secrets["USDA_API_KEY"]
 
 # Search food names from USDA
 def search_foods(query, max_results=5):
