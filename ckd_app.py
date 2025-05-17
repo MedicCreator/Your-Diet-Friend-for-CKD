@@ -75,6 +75,7 @@ def get_food_info(query):
 st.title("Diet Analyzer for Kidney Disease")
 
 user_input = st.text_input("Enter a food name (e.g., salmon, banana, rice):")
+user_input = user_input.strip().lower()
 
 if st.button("Analyze"):
     if not user_input:
