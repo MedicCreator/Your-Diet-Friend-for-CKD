@@ -27,7 +27,7 @@ def extract_nutrients(fdc_id):
 
     def get_nutrient(name):
         for nutrient in nutrients:
-            if name.lower() in nutrient.get("nutrientName", "").lower():
+            if name.lower() == nutrient.get("nutrientName", "").lower():
                 return nutrient.get("value")
         return None
 
@@ -36,11 +36,32 @@ def extract_nutrients(fdc_id):
         "Protein (g)": get_nutrient("Protein"),
         "Total Fat (g)": get_nutrient("Total lipid (fat)"),
         "Carbohydrates (g)": get_nutrient("Carbohydrate, by difference"),
-        "Sodium (mg)": get_nutrient("Sodium"),
-        "Potassium (mg)": get_nutrient("Potassium"),
-        "Phosphorus (mg)": get_nutrient("Phosphorus"),
+        "Sodium (mg)": get_nutrient("Sodium, Na"),
+        "Potassium (mg)": get_nutrient("Potassium, K"),
+        "Phosphorus (mg)": get_nutrient("Phosphorus, P"),
         "Water (g)": get_nutrient("Water")
     }
+
+def generate_health_advice(nutrients):
+    suggestions = []
+
+    # CKD guidelines
+    if nutrients.get("Potassium (mg)") and nutrients["Potassium (mg)"] > 300:
+        suggestions.append("⚠ High in Potassium — consider alternatives for CKD.")
+    if nutrients.get("Phosphorus (mg)") and nutrients["Phosphorus (mg)"] > 150:
+        suggestions.append("⚠ High in Phosphorus — limit if you have CKD.")
+    if nutrients.get("Sodium (mg)") and nutrients["Sodium (mg)"] > 140:
+        suggestions.append("⚠ High in Sodium — choose low-sodium versions.")
+    if nutrients.get("Protein (g)") and nutrients["Protein (g)"] > 20:
+        suggestions.append("⚠ High in Protein — monitor intake if CKD stage 3–5.")
+
+    # Diabetic considerations
+    if nutrients.get("Carbohydrates (g)") and nutrients["Carbohydrates (g)"] > 25:
+        suggestions.append("⚠ High in Carbohydrates — consider insulin response.")
+    if nutrients.get("Total Fat (g)") and nutrients["Total Fat (g)"] > 15:
+        suggestions.append("⚠ High in Fat — balance intake for diabetes control.")
+
+    return "; ".join(suggestions) if suggestions else "✅ CKD & Diabetic Friendly"
 
 def get_food_info(query):
     matches = search_foods(query)
@@ -53,11 +74,12 @@ def get_food_info(query):
         if nutrients:
             food_info.append({
                 "Food": food["description"],
-                **nutrients
+                **nutrients,
+                "Health Advice": generate_health_advice(nutrients)
             })
     return pd.DataFrame(food_info)
 
-st.title("💊 Diet Analyzer for Kidney Disease (CKD)")
+st.title("💊 Diet Analyzer for Kidney Disease (CKD) + Diabetes")
 
 user_input = st.text_input("Enter a food name (e.g., banana, salmon, rice):")
 
