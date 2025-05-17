@@ -1,57 +1,82 @@
-import pandas as pd
 import streamlit as st
+import requests
+import pandas as pd
+from dotenv import load_dotenv
+import os
 
-food_data = [
-    {"Food": "Boiled Egg", "Calories": 68, "Sodium_mg": 71, "Potassium_mg": 63, "Phosphorus_mg": 95},
-    {"Food": "Apple (1 medium)", "Calories": 95, "Sodium_mg": 2, "Potassium_mg": 195, "Phosphorus_mg": 20},
-{"Food": "White Bread (1 slice)", "Calories": 66, "Sodium_mg": 134, "Potassium_mg": 37, "Phosphorus_mg": 25},
-    {"Food": "Banana (1 medium)", "Calories": 105, "Sodium_mg": 1, "Potassium_mg": 422, "Phosphorus_mg": 22},
-    {"Food": "Grilled Chicken (3 oz)", "Calories": 128, "Sodium_mg": 60, "Potassium_mg": 220, "Phosphorus_mg": 196},
-    {"Food": "Brown Rice (1 cup)", "Calories": 216, "Sodium_mg": 10, "Potassium_mg": 84, "Phosphorus_mg": 162},
-    {"Food": "Broccoli (1/2 cup steamed)", "Calories": 27, "Sodium_mg": 25, "Potassium_mg": 229, "Phosphorus_mg": 32},
-    {"Food": "Milk (1 cup)", "Calories": 103, "Sodium_mg": 107, "Potassium_mg": 366, "Phosphorus_mg": 247},
-    {"Food": "Oatmeal (1/2 cup cooked)", "Calories": 83, "Sodium_mg": 2, "Potassium_mg": 61, "Phosphorus_mg": 77}
-]
+# Load your API key securely
+load_dotenv()
+API_KEY = os.getenv("USDA_API_KEY")
 
-food_df = pd.DataFrame(food_data)
+# Search food names from USDA
+def search_foods(query, max_results=5):
+    url = "https://api.nal.usda.gov/fdc/v1/foods/search"
+    params = {
+        "api_key": API_KEY,
+        "query": query,
+        "pageSize": max_results
+    }
+    response = requests.get(url, params=params)
+    if response.status_code == 200:
+        return response.json().get("foods", [])
+    return []
 
-def analyze_food_intake(food_items):
-    results = []
-    for item in food_items:
-        match = food_df[food_df["Food"].str.lower().str.contains(item.lower(), na=False)]
-        if match.empty:
-            results.append({"Food": item, "Error": "Food not found in database."})
-            continue
+# Extract core nutrients
+def extract_nutrients(fdc_id):
+    url = f"https://api.nal.usda.gov/fdc/v1/food/{fdc_id}"
+    params = {"api_key": API_KEY}
+    response = requests.get(url, params=params)
+    if response.status_code != 200:
+        return {}
 
-        row = match.iloc[0]
-        suggestions = []
+    nutrients = response.json().get("foodNutrients", [])
 
-        if row["Potassium_mg"] > 300:
-            suggestions.append("Consider lower-potassium alternatives (e.g., berries, apples).")
-        if row["Phosphorus_mg"] > 150:
-            suggestions.append("Limit phosphorus-rich foods (e.g., reduce dairy, beans).")
-        if row["Sodium_mg"] > 140:
-            suggestions.append("Choose low-sodium or fresh versions.")
+    def get_nutrient(name):
+        for nutrient in nutrients:
+            if name.lower() in nutrient.get("nutrientName", "").lower():
+                return nutrient.get("value")
+        return None
 
-        results.append({
-            "Food": row["Food"],
-            "Calories": row["Calories"],
-            "Sodium (mg)": row["Sodium_mg"],
-            "Potassium (mg)": row["Potassium_mg"],
-            "Phosphorus (mg)": row["Phosphorus_mg"],
-            "CKD-Friendly Suggestions": "; ".join(suggestions) if suggestions else "OK"
-        })
+    return {
+        "Calories": get_nutrient("Energy"),
+        "Sodium (mg)": get_nutrient("Sodium"),
+        "Potassium (mg)": get_nutrient("Potassium"),
+        "Phosphorus (mg)": get_nutrient("Phosphorus")
+    }
 
-    return pd.DataFrame(results)
+# Get nutrition data for all searched foods
+def get_food_info(query):
+    matches = search_foods(query)
+    food_info = []
+    for food in matches:
+        nutrients = extract_nutrients(food["fdcId"])
+        if nutrients:
+            suggestion = []
+            if nutrients["Potassium (mg)"] and nutrients["Potassium (mg)"] > 300:
+                suggestion.append("Consider lower-potassium alternatives (e.g., berries, apples).")
+            if nutrients["Phosphorus (mg)"] and nutrients["Phosphorus (mg)"] > 150:
+                suggestion.append("Limit phosphorus-rich foods (e.g., reduce dairy, beans).")
+            if nutrients["Sodium (mg)"] and nutrients["Sodium (mg)"] > 140:
+                suggestion.append("Choose low-sodium or fresh versions.")
 
+            food_info.append({
+                "Food": food["description"],
+                **nutrients,
+                "CKD-Friendly Suggestions": "; ".join(suggestion) if suggestion else "OK"
+            })
+    return pd.DataFrame(food_info)
+
+# Streamlit UI
 st.title("Diet Analyzer for Kidney Disease")
 
-user_input = st.text_area("Enter food items (comma-separated):", "Banana, Grilled Chicken, Milk")
+user_input = st.text_input("Enter a food name (e.g., salmon, banana, rice):")
 
 if st.button("Analyze"):
-    food_list = [item.strip() for item in user_input.split(",") if item.strip()]
-    if food_list:
-        results = analyze_food_intake(food_list)
-        st.dataframe(results)
+    if not user_input:
+        st.warning("Please enter a food name.")
     else:
-        st.warning("Please enter at least one food item.")
+        result_df = get_food_info(user_input)
+        if not result_df.empty:
+            st.dataframe(result_df)
+        else:
+            st.error("No results found or API error.")
