@@ -14,9 +14,22 @@ def search_foods(query, max_results=5):
         "pageSize": max_results
     }
     response = requests.get(url, params=params)
+
+    # 🔍 Show debug info directly in the app
+    st.write("🔎 API Status:", response.status_code)
+    st.write("🔗 Full URL:", response.url)
+
+    try:
+        json_data = response.json()
+        st.write("📦 Response:", json_data)
+    except Exception as e:
+        st.error(f"❌ Failed to parse JSON: {e}")
+        return []
+
     if response.status_code == 200:
-        return response.json().get("foods", [])
+        return json_data.get("foods", [])
     return []
+
 
 # 🧪 Extract nutrients from food record
 def extract_nutrients(fdc_id):
