@@ -42,27 +42,6 @@ def extract_nutrients(fdc_id):
         "Water (g)": get_nutrient("Water")
     }
 
-def generate_health_advice(nutrients):
-    suggestions = []
-
-    # CKD guidelines
-    if nutrients.get("Potassium (mg)") and nutrients["Potassium (mg)"] > 300:
-        suggestions.append("⚠ High in Potassium — consider alternatives for CKD.")
-    if nutrients.get("Phosphorus (mg)") and nutrients["Phosphorus (mg)"] > 150:
-        suggestions.append("⚠ High in Phosphorus — limit if you have CKD.")
-    if nutrients.get("Sodium (mg)") and nutrients["Sodium (mg)"] > 140:
-        suggestions.append("⚠ High in Sodium — choose low-sodium versions.")
-    if nutrients.get("Protein (g)") and nutrients["Protein (g)"] > 20:
-        suggestions.append("⚠ High in Protein — monitor intake if CKD stage 3–5.")
-
-    # Diabetic considerations
-    if nutrients.get("Carbohydrates (g)") and nutrients["Carbohydrates (g)"] > 25:
-        suggestions.append("⚠ High in Carbohydrates — consider insulin response.")
-    if nutrients.get("Total Fat (g)") and nutrients["Total Fat (g)"] > 15:
-        suggestions.append("⚠ High in Fat — balance intake for diabetes control.")
-
-    return "; ".join(suggestions) if suggestions else "✅ CKD & Diabetic Friendly"
-
 def get_food_info(query):
     matches = search_foods(query)
     if not matches:
@@ -74,8 +53,7 @@ def get_food_info(query):
         if nutrients:
             food_info.append({
                 "Food": food["description"],
-                **nutrients,
-                "Health Advice": generate_health_advice(nutrients)
+                **nutrients
             })
     return pd.DataFrame(food_info)
 
