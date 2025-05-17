@@ -2,10 +2,10 @@ import streamlit as st
 import requests
 import pandas as pd
 
-# Load API key from Streamlit Secrets
+# Load API key from Streamlit Cloud Secrets
 API_KEY = st.secrets["USDA_API_KEY"]
 
-# Search food names from USDA
+# Function to search foods from USDA
 def search_foods(query, max_results=5):
     url = "https://api.nal.usda.gov/fdc/v1/foods/search"
     params = {
@@ -18,7 +18,7 @@ def search_foods(query, max_results=5):
         return response.json().get("foods", [])
     return []
 
-# Extract core nutrients
+# Function to extract specific nutrients
 def extract_nutrients(fdc_id):
     url = f"https://api.nal.usda.gov/fdc/v1/food/{fdc_id}"
     params = {"api_key": API_KEY}
@@ -36,30 +36,37 @@ def extract_nutrients(fdc_id):
 
     return {
         "Calories": get_nutrient("Energy"),
+        "Protein (g)": get_nutrient("Protein"),
         "Sodium (mg)": get_nutrient("Sodium"),
         "Potassium (mg)": get_nutrient("Potassium"),
         "Phosphorus (mg)": get_nutrient("Phosphorus")
     }
 
-# Get nutrition data for all searched foods
+# Function to gather nutrient data and CKD advice
 def get_food_info(query):
     matches = search_foods(query)
+    if not matches:
+        st.error("❌ No results from USDA API — check your API key or food spelling.")
+        st.stop()
+
     food_info = []
     for food in matches:
         nutrients = extract_nutrients(food["fdcId"])
         if nutrients:
-            suggestion = []
+            suggestions = []
             if nutrients["Potassium (mg)"] and nutrients["Potassium (mg)"] > 300:
-                suggestion.append("Consider lower-potassium alternatives (e.g., berries, apples).")
+                suggestions.append("Consider lower-potassium alternatives (e.g., berries, apples).")
             if nutrients["Phosphorus (mg)"] and nutrients["Phosphorus (mg)"] > 150:
-                suggestion.append("Limit phosphorus-rich foods (e.g., reduce dairy, beans).")
+                suggestions.append("Limit phosphorus-rich foods (e.g., reduce dairy, beans).")
             if nutrients["Sodium (mg)"] and nutrients["Sodium (mg)"] > 140:
-                suggestion.append("Choose low-sodium or fresh versions.")
+                suggestions.append("Choose low-sodium or fresh versions.")
+            if nutrients["Protein (g)"] and nutrients["Protein (g)"] > 20:
+                suggestions.append("Monitor protein intake — consult your dietitian.")
 
             food_info.append({
                 "Food": food["description"],
                 **nutrients,
-                "CKD-Friendly Suggestions": "; ".join(suggestion) if suggestion else "OK"
+                "CKD-Friendly Suggestions": "; ".join(suggestions) if suggestions else "OK"
             })
     return pd.DataFrame(food_info)
 
