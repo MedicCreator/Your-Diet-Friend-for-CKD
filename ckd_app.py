@@ -4,6 +4,18 @@ import pandas as pd
 
 API_KEY = st.secrets["USDA_API_KEY"]
 
+# Use USDA nutrient IDs for accurate extraction
+NUTRIENT_IDS = {
+    1008: "Calories",
+    1003: "Protein (g)",
+    1004: "Total Fat (g)",
+    1005: "Carbohydrates (g)",
+    1093: "Sodium (mg)",
+    1092: "Potassium (mg)",
+    1091: "Phosphorus (mg)",
+    1051: "Water (g)"
+}
+
 def search_foods(query, max_results=5):
     url = "https://api.nal.usda.gov/fdc/v1/foods/search"
     params = {
@@ -24,23 +36,12 @@ def extract_nutrients(fdc_id):
         return {}
 
     nutrients = response.json().get("foodNutrients", [])
-
-    def get_nutrient(name):
-        for nutrient in nutrients:
-            if name.lower() == nutrient.get("nutrientName", "").lower():
-                return nutrient.get("value")
-        return None
-
-    return {
-        "Calories": get_nutrient("Energy"),
-        "Protein (g)": get_nutrient("Protein"),
-        "Total Fat (g)": get_nutrient("Total lipid (fat)"),
-        "Carbohydrates (g)": get_nutrient("Carbohydrate, by difference"),
-        "Sodium (mg)": get_nutrient("Sodium, Na"),
-        "Potassium (mg)": get_nutrient("Potassium, K"),
-        "Phosphorus (mg)": get_nutrient("Phosphorus, P"),
-        "Water (g)": get_nutrient("Water")
-    }
+    result = {}
+    for nutrient in nutrients:
+        nutrient_id = nutrient.get("nutrient", {}).get("id")
+        if nutrient_id in NUTRIENT_IDS:
+            result[NUTRIENT_IDS[nutrient_id]] = nutrient.get("amount")
+    return result
 
 def get_food_info(query):
     matches = search_foods(query)
@@ -51,10 +52,9 @@ def get_food_info(query):
     for food in matches:
         nutrients = extract_nutrients(food["fdcId"])
         if nutrients:
-            food_info.append({
-                "Food": food["description"],
-                **nutrients
-            })
+            entry = {"Food": food["description"]}
+            entry.update(nutrients)
+            food_info.append(entry)
     return pd.DataFrame(food_info)
 
 st.title("💊 Diet Analyzer for Kidney Disease (CKD) + Diabetes")
