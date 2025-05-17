@@ -2,11 +2,10 @@ import streamlit as st
 import requests
 import pandas as pd
 
-# Load API key from Streamlit Cloud Secrets
+# ✅ Load API key securely from Streamlit Secrets
 API_KEY = st.secrets["USDA_API_KEY"]
-st.write("API Key loaded:", API_KEY[:4] + "****")
 
-# Function to search foods from USDA
+# 🔍 Search food in USDA database
 def search_foods(query, max_results=5):
     url = "https://api.nal.usda.gov/fdc/v1/foods/search"
     params = {
@@ -19,7 +18,7 @@ def search_foods(query, max_results=5):
         return response.json().get("foods", [])
     return []
 
-# Function to extract specific nutrients
+# 🧪 Extract nutrients from food record
 def extract_nutrients(fdc_id):
     url = f"https://api.nal.usda.gov/fdc/v1/food/{fdc_id}"
     params = {"api_key": API_KEY}
@@ -43,12 +42,11 @@ def extract_nutrients(fdc_id):
         "Phosphorus (mg)": get_nutrient("Phosphorus")
     }
 
-# Function to gather nutrient data and CKD advice
+# 📊 Fetch info and provide CKD recommendations
 def get_food_info(query):
     matches = search_foods(query)
     if not matches:
-        st.error("❌ No results from USDA API — check your API key or food spelling.")
-        st.stop()
+        return pd.DataFrame([{"Food": query, "Error": "❌ No results found. Check spelling or try another food."}])
 
     food_info = []
     for food in matches:
@@ -56,33 +54,31 @@ def get_food_info(query):
         if nutrients:
             suggestions = []
             if nutrients["Potassium (mg)"] and nutrients["Potassium (mg)"] > 300:
-                suggestions.append("Consider lower-potassium alternatives (e.g., berries, apples).")
+                suggestions.append("⚠ High Potassium: Try berries or apples instead.")
             if nutrients["Phosphorus (mg)"] and nutrients["Phosphorus (mg)"] > 150:
-                suggestions.append("Limit phosphorus-rich foods (e.g., reduce dairy, beans).")
+                suggestions.append("⚠ High Phosphorus: Limit dairy, beans.")
             if nutrients["Sodium (mg)"] and nutrients["Sodium (mg)"] > 140:
-                suggestions.append("Choose low-sodium or fresh versions.")
+                suggestions.append("⚠ High Sodium: Choose fresh or low-sodium options.")
             if nutrients["Protein (g)"] and nutrients["Protein (g)"] > 20:
-                suggestions.append("Monitor protein intake — consult your dietitian.")
+                suggestions.append("⚠ High Protein: Monitor intake with your doctor.")
 
             food_info.append({
                 "Food": food["description"],
                 **nutrients,
-                "CKD-Friendly Suggestions": "; ".join(suggestions) if suggestions else "OK"
+                "CKD Suggestions": "; ".join(suggestions) if suggestions else "✅ OK"
             })
     return pd.DataFrame(food_info)
 
-# Streamlit UI
-st.title("Diet Analyzer for Kidney Disease")
+# 🌐 Streamlit UI
+st.title("💊 Diet Analyzer for Kidney Disease (CKD)")
 
-user_input = st.text_input("Enter a food name (e.g., salmon, banana, rice):")
-user_input = user_input.strip().lower()
+user_input = st.text_input("Enter a food name (e.g., banana, salmon, rice):")
 
 if st.button("Analyze"):
-    if not user_input:
+    if not user_input.strip():
         st.warning("Please enter a food name.")
     else:
-        result_df = get_food_info(user_input)
-        if not result_df.empty:
-            st.dataframe(result_df)
-        else:
-            st.error("No results found or API error.")
+        cleaned_input = user_input.strip().lower()
+        results = get_food_info(cleaned_input)
+        st.dataframe(results)
+
