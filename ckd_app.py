@@ -35,8 +35,15 @@ def extract_nutrients(fdc_id):
     if response.status_code != 200:
         return {}
 
-    nutrients = response.json().get("foodNutrients", [])
-    result = {}
+    data = response.json()
+    nutrients = data.get("foodNutrients", [])
+    portion = data.get("servingSize")
+    portion_unit = data.get("servingSizeUnit")
+
+    result = {
+        "Portion Size": f"{portion} {portion_unit}" if portion and portion_unit else "N/A"
+    }
+
     for nutrient in nutrients:
         nutrient_id = nutrient.get("nutrient", {}).get("id")
         if nutrient_id in NUTRIENT_IDS:
