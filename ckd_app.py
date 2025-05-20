@@ -2,10 +2,8 @@ import streamlit as st
 import requests
 import pandas as pd
 
-# Load your USDA API key securely from Streamlit secrets
 API_KEY = st.secrets["USDA_API_KEY"]
 
-# Nutrient ID mapping for USDA database
 NUTRIENT_IDS = {
     1008: "Calories",
     1003: "Protein (g)",
@@ -17,7 +15,6 @@ NUTRIENT_IDS = {
     1051: "Water (g)"
 }
 
-# Search for foods by name
 def search_foods(query, max_results=5):
     url = "https://api.nal.usda.gov/fdc/v1/foods/search"
     params = {
@@ -30,7 +27,6 @@ def search_foods(query, max_results=5):
         return response.json().get("foods", [])
     return []
 
-# Get nutrients for a specific FDC food ID
 def extract_nutrients(fdc_id):
     url = f"https://api.nal.usda.gov/fdc/v1/food/{fdc_id}"
     params = {"api_key": API_KEY}
@@ -40,8 +36,14 @@ def extract_nutrients(fdc_id):
 
     data = response.json()
     nutrients = data.get("foodNutrients", [])
+
     portion = data.get("servingSize")
     portion_unit = data.get("servingSizeUnit")
+
+    if not portion and data.get("foodPortions"):
+        portion_entry = data["foodPortions"][0]
+        portion = portion_entry.get("gramWeight")
+        portion_unit = "g"
 
     result = {
         "Portion Size": f"{portion} {portion_unit}" if portion and portion_unit else "N/A"
@@ -54,7 +56,6 @@ def extract_nutrients(fdc_id):
 
     return result
 
-# Compile data for display
 def get_food_info(query):
     matches = search_foods(query)
     if not matches:
@@ -69,7 +70,6 @@ def get_food_info(query):
             food_info.append(entry)
     return pd.DataFrame(food_info)
 
-# Streamlit UI
 st.title("💊 Diet Analyzer for Kidney Disease (CKD) + Diabetes")
 
 user_input = st.text_input("Enter a food name (e.g., banana, salmon, rice):")
