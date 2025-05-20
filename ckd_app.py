@@ -36,18 +36,7 @@ def extract_nutrients(fdc_id):
 
     data = response.json()
     nutrients = data.get("foodNutrients", [])
-
-    portion = data.get("servingSize")
-    portion_unit = data.get("servingSizeUnit")
-
-    if not portion and data.get("foodPortions"):
-        portion_entry = data["foodPortions"][0]
-        portion = portion_entry.get("gramWeight")
-        portion_unit = "g"
-
-    result = {
-        "Portion Size": f"{portion} {portion_unit}" if portion and portion_unit else "N/A"
-    }
+    result = {}
 
     for nutrient in nutrients:
         nutrient_id = nutrient.get("nutrient", {}).get("id")
