@@ -36,7 +36,18 @@ def extract_nutrients(fdc_id):
 
     data = response.json()
     nutrients = data.get("foodNutrients", [])
-    result = {}
+    portion = data.get("servingSize")
+    portion_unit = data.get("servingSizeUnit")
+
+    # Fallback to 100g if serving info is missing
+    if not portion or not portion_unit:
+        portion_label = "100 g (default)"
+    else:
+        portion_label = f"{portion} {portion_unit}"
+
+    result = {
+        "Portion Size": portion_label
+    }
 
     for nutrient in nutrients:
         nutrient_id = nutrient.get("nutrient", {}).get("id")
